@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
+        select: false,
         required: [true, 'Password is required'],
         minlength: [8, 'Password must be at least 8 characters long']
 
@@ -65,10 +66,19 @@ const userSchema = new mongoose.Schema({
             default: Date.now
         }
     },
+    loginAttempts: {
+        type: Number,
+        default: 0
+    },
+    lockUntil: {
+        type: Date,
+        default: null
+    },
+
     refreshToken: {
         type: String,
         default: null,
-        index: true
+        select: false
 
 
     },
@@ -81,12 +91,15 @@ const userSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 userSchema.index({ email: 1 , refreshToken: 1 , role: 1 });
-userSchema.pre('save', function (next) {
+userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
     
  this.password = await bcrypt.hash(this.password, 10);
 
       
 });
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
+};
 const User = mongoose.model('User', userSchema);
 module.exports = User;
