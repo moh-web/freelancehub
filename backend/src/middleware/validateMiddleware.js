@@ -5,6 +5,7 @@ const validate = (schema) => {
         if (!result.success) {
             return res.status(400).json({ success: false, errors: result.error.issues.map(issue => {return { path: issue.path, message: issue.message };}) });
         }
+        
         next();
     };
 };
