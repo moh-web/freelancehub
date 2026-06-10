@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-
+const portfolioItemSchema = new mongoose.Schema({
+  title:       { type: String, required: true },
+  description: { type: String },
+  fileUrl:     { type: String },
+}, { _id: false, timestamps: true });
 const userSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -42,30 +46,8 @@ const userSchema = new mongoose.Schema({
     hourlyRate: {
         type: Number,
         min: [0, 'Hourly rate cannot be negative'],
-            required: function () {
-      return this.role === "freelancer";
-        //freelancers only
-        
-    }},
-    portofolio: {
-        title: {
-            type: String,
-            required: [true, 'Portofolio title is required']
-
-    },
-        description: {
-            type: String,
-            required: [true, 'Portofolio description is required']
-        },
-        fileUrl:{
-            type: String,
-        
-        },
-        createdAt: {
-            type: Date,
-            default: Date.now
-        }
-    },
+           },
+    portofolio: [portfolioItemSchema],
     loginAttempts: {
         type: Number,
         default: 0
@@ -91,11 +73,11 @@ const userSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 userSchema.index({ email: 1 , refreshToken: 1 , role: 1 });
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) return next();
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return ;
     
  this.password = await bcrypt.hash(this.password, 10);
-
+ 
       
 });
 userSchema.methods.comparePassword = async function (candidatePassword) {

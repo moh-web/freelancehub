@@ -1,6 +1,11 @@
 
 const User = require("../models/User");
-const { generateAccessToken, generateRefreshToken, sendRefreshTokenCookie } = require("../services/tokenService");
+const {
+    accessTokenGenerator,
+    refreshTokenGenerator,
+    sendRefreshTokenCookie,
+} = require("../services/tokenService");
+
 const maxLoginAttempts = 5;
 const lockTime = 30 * 1000; // 30 seconds for testing
 const loginController = async (req, res, next) => {
@@ -25,19 +30,20 @@ const loginController = async (req, res, next) => {
         if (!isMatch) {
             user.loginAttempts += 1;
             return res.status(400).json({ message: "Invalid credentials", success: false })};
+            // Reset login attempts on successful login
         if (user.loginAttempts >= maxLoginAttempts) {
                 user.lockUntil = new Date(Date.now() + lockTime);
                 user.loginAttempts = 0; // reset attempts after locking
             }
           
             // Save refresh token in DB
-            const refreshToken = generateRefreshToken(user);
-            const accessToken = generateAccessToken(user);
+            const refreshToken = refreshTokenGenerator(user);
+            const accessToken = accessTokenGenerator(user);
              user.refreshToken = refreshToken;
             await user.save();
             
+            sendRefreshTokenCookie(res, refreshToken);
         res.status(200).json({ accessToken, success: true, message: "Logged in successfully"    });
-        sendRefreshTokenCookie(res, refreshToken);
          
         }
         // Generate tokens
@@ -55,21 +61,23 @@ const registerController = async (req, res, next) => {
     if (!name || !email || !password || !role) {
         return res.status(400).json({ message: "All fields are required", success: false });
     }
+    // Validate role
     const lowerCaseRole = role.toLowerCase().trim();
     if (!validRoles.includes(lowerCaseRole)) {
         return res.status(400).json({ message: "Invalid role", success: false });
     }
     
     try {
+        // Check if user already exists
             const normalizedEmail = email.toLowerCase().trim();
         const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(400).json({ message: "Email already in use", success: false });
         }
         const user = new User({ name, email: normalizedEmail, password, role });
-        const refreshToken = generateRefreshToken(user);
+        const refreshToken = refreshTokenGenerator(user);
         user.refreshToken = refreshToken;
-        const accessToken = generateAccessToken(user);
+        const accessToken = accessTokenGenerator(user);
         await user.save();
         sendRefreshTokenCookie(res, refreshToken);
         res.status(201).json({ accessToken,user: { name: user.name, email: user.email, role: user.role }, success: true, message: "User registered successfully" });
