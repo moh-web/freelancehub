@@ -18,7 +18,8 @@ const proposalSchema = new mongoose.Schema({
     bidAmount: {
         type: Number,
         required: [true, 'Bid amount is required'],
-        min: [0, 'Bid amount cannot be negative']
+        min: [0, 'Bid amount cannot be negative'],
+        max: [1000000, 'Bid amount cannot exceed 1,000,000']
     },
     deliveryDays : {
         type: Number,

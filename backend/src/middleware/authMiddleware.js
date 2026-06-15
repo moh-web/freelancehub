@@ -1,22 +1,24 @@
-
-const JWT = require("jsonwebtoken");
-const authMiddleware = async (req, res, next) => {
-    const token = req.cookies.refreshToken;
-    if (!token) {
-        return res.status(401).json({ message: "No token provided", success: false });
-    }
+const protectedRoute = (req, res, next) => {
     try{
-        const decoded = await JWT.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-            if (err) {
-                throw new Error("Invalid token");
-            }
-            return decoded;
-        });
-        req.user=decoded,
-        
-        next();
-    }catch(err){
-        return res.status(401).json({ message: "Invalid token", success: false });
-    }
+        const token = req.headers.authorization.split(' ')[1]
+        if(!token) return res.status(401).json({message: 'Unauthorized'}
+
+        )
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        req.user = decoded
+        next()
+    }catch(err){next(err)}
 }
-module.exports = authMiddleware;
+const authorizedRoute = (req, res, next) => {
+    const roles = ['client', 'freelancer', 'admin'];
+
+        if (!req.user) {
+            return res.status(401).json({ message: 'Unauthorized' });
+        }
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+        next();
+    };
+
+module.exports = { protectedRoute, authorizedRoute }

@@ -1,3 +1,4 @@
+const { text } = require('express');
 const mongoose = require('mongoose');
 
 const jobSchema = new mongoose.Schema({
@@ -15,26 +16,23 @@ const jobSchema = new mongoose.Schema({
     },
     client: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: [true, 'Client is required']
+        ref: 'User'
+       
     },
-    category: {
-        type: String,
-        required: [true, 'Job category is required'],
-        enum: ['Web Development', 'Graphic Design', 'Content Writing', 'Digital Marketing', 'Other']
-    },
-    skillsRequired: {
-        type: [String],
-        required: [true, 'At least one skill is required']
-    },
+     category:    { type: String, required: true,
+                 enum: ['web-development','mobile','design',
+                        'writing','marketing','data-science','other'] },
+    
     budget: {
-        embeded: {type: "fixed" | "hourly", min: [0, 'Budget cannot be negative'], max: [1000000, 'Budget cannot exceed 1 million']},
+        embeded: {type: "fixed" | "hourly"},
         type: Number,
+        max: [1000000, 'Job budget cannot exceed 1,000,000'],
+        min: [0, 'Job budget cannot be negative'],
         required: [true, 'Job budget is required']
     },
     deadline: {
-        type: Date,
-        required: [true, 'Job deadline is required'],
+        type: Date
+       
     },
     status: {
         type: String,
@@ -48,11 +46,11 @@ const jobSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Proposal'
     }],
-    salary: {
-        type: Number,
-        required: [true, 'Job salary is required'],
-    }
-});
+    skillsRequired: {
+        type: [String]},
+
+    
+}, { timestamps: true });
 //compound index for filtering and sorting
 jobSchema.index({
   status: 1,
@@ -60,11 +58,12 @@ jobSchema.index({
   createdAt: -1,
 skillsRequired: 1
 });
-//text index for search
+
 jobSchema.index({
-  title: 'text',
-  description: 'text'
-});
+    title: "text",
+    description: "text",
+    skillsRequired: "text"
+})
 
 const Job = mongoose.model('Job', jobSchema);
 module.exports = Job;
