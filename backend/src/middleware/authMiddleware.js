@@ -1,10 +1,25 @@
+const jwt = require("jsonwebtoken")
+const dotenv = require("dotenv")
+
+dotenv.config({path: "../.env"})
+
 const protectedRoute = (req, res, next) => {
     try{
-        const token = req.headers.authorization.split(' ')[1]
+          const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({
+            success: false,
+            message: "Authorization header is required"
+        });
+    }
+        const token = authHeader.split(' ')[1];
+        console.log(`token: ${token}`)
         if(!token) return res.status(401).json({message: 'Unauthorized'}
 
         )
-        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        // console.log(decoded)
         req.user = decoded
         next()
     }catch(err){next(err)}

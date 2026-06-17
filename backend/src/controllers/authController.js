@@ -56,6 +56,7 @@ const loginController = async (req, res, next) => {
     }} 
 
 const registerController = async (req, res, next) => {
+    console.log(req.body)
     const { name, email, password, role } = req.body;
     const validRoles = ["freelancer", "client"];
     if (!name || !email || !password || !role) {

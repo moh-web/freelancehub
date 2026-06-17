@@ -6,6 +6,7 @@ const createJob = async (req, res, next) => {
    
     try{
         const attachments = req.files ? req.files.map(file => file.path) : [];
+     
         const newJob = await Job.create({ client:req.user._id, ...req.body, attachments});
         res.status(201).json(newJob);
     }catch (error) {
