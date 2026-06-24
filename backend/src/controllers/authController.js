@@ -18,23 +18,42 @@ const loginController = async (req, res, next) => {
         }
         const normalizedEmail = email.toLowerCase().trim();
         const user = await User.findOne({ email: normalizedEmail }).select('+password +refreshToken');
-        if (!user) {
+          if (!user) {
             return res.status(400).json({ message: "Invalid credentials", success: false });
         }
-         if(user.lockUntil && user.lockUntil > Date.now()){
+        if(user.lockUntil && user.lockUntil > Date.now()){
             // Account is locked
             const remainingTime = Math.ceil((user.lockUntil - Date.now()) / 1000);
             return res.status(403).json({ message: `Account locked. Try again in ${remainingTime} seconds`, success: false });
-        }
+        };
+        
+          
+      
+         
         const isMatch = await user.comparePassword(password);
         if (!isMatch) {
+           
             user.loginAttempts += 1;
-            return res.status(400).json({ message: "Invalid credentials", success: false })};
-            // Reset login attempts on successful login
-        if (user.loginAttempts >= maxLoginAttempts) {
+              if (user.loginAttempts >= maxLoginAttempts) {
                 user.lockUntil = new Date(Date.now() + lockTime);
                 user.loginAttempts = 0; // reset attempts after locking
+                await user.save();
+                 return res.status(403).json({
+            message: "Account locked for 30 seconds",
+            success: false
+        });
+                
             }
+              await user.save();
+                return res.status(400).json({ message: "Invalid credentials", success: false })};
+      
+    
+            
+            
+          
+          
+            // Reset login attempts on successful login
+      
           
             // Save refresh token in DB
             const refreshToken = refreshTokenGenerator(user);

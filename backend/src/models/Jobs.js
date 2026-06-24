@@ -1,6 +1,7 @@
-const { text } = require('express');
+
 const mongoose = require('mongoose');
-const { number } = require('zod');
+
+
 
 const jobSchema = new mongoose.Schema({
     title: {
@@ -17,26 +18,28 @@ const jobSchema = new mongoose.Schema({
     },
     client: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
+        required: true
        
     },
      category:    { type: String, required: true,
                  enum: ['web-development','mobile','design',
                         'writing','marketing','data-science','other'] },
     
-    budget: {
+   budget: {
     type: {
         type: String,
-        enum: ['fixed', 'hourly'],
-        required: [true, 'Budget type is required']
+        enum: ["fixed", "hourly"],
+        required: true
     },
-   value:{
-    type: number,
-    min: [0, "min value should be greater than 0"],
-    max: [1000000, "max value is 1000,000"]
-
-   }
+    value: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 1000000
+    }
 },
+
     deadline: {
         type: Date
        
@@ -46,7 +49,7 @@ const jobSchema = new mongoose.Schema({
         enum: ['open', 'in progress', 'completed', 'cancelled'],
         default: 'open'
     },
-    attatchments: {
+    attachments: {
         type: [String]
     },
     proposals: [{
@@ -54,7 +57,9 @@ const jobSchema = new mongoose.Schema({
         ref: 'Proposal'
     }],
     skillsRequired: {
-        type: [String]},
+        type: [String],
+        default: []
+    },
 
     
 }, { timestamps: true });

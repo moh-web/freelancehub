@@ -1,12 +1,12 @@
 const {z} = require('zod');
 const createProposalSchema = z.object({
-    job: z.string().uuid(),
-    freelancer: z.string().uuid(),
+    job: z.string(),
+    freelancer: z.string(),
     coverLetter: z.string().trim().max(1000),
     bidAmount: z.number().min(0),
     deliveryDays: z.number().min(1),
     status: z.enum(['pending', 'accepted', 'rejected', 'withdrawn']).default('pending'),
-    attatchments: z.array(z.string()).optional()
+    attachments: z.array(z.string()).optional()
 });
 const validateProposal = (schema) => (req, res, next) => {
     const result = schema.safeParse(req.body);

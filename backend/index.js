@@ -6,7 +6,8 @@ const connectDB = require("./src/config/db");
 const cors = require("cors");
 const app = express();
 const authRoutes = require("./src/routes/authRoutes");
-const job = require("./src/routes/jobRoutes")
+const Job = require("./src/routes/jobRoutes");
+const Proposal = require("./src/routes/propsaslRoutes");
 
 app.use(cookieParser());
 app.use(express.json());
@@ -24,7 +25,8 @@ app.get("/", (req, res) => {
 });
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/api/job", job);
+app.use("/api/job", Job);
+app.use("/api/proposals", Proposal);
 //error handler
 app.use(errorHandler);
 const port = process.env.PORT || 5000;

@@ -13,7 +13,7 @@ const proposalSchema = new mongoose.Schema({
     coverLetter: {
         type: String,
         required: [true, 'Cover letter is required'],
-        maxlength: [1000, 'Cover letter cannot exceed 1000 characters']
+        max: [1000, 'Cover letter cannot exceed 1000 characters']
     },
     bidAmount: {
         type: Number,

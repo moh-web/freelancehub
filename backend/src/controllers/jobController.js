@@ -1,13 +1,13 @@
-
 const Job = require('../models/Jobs');
+const Prposal = require('../models/proposal');
 
 
 const createJob = async (req, res, next) => {
    
     try{
         const attachments = req.files ? req.files.map(file => file.path) : [];
-     
-        const newJob = await Job.create({ client:req.user._id, ...req.body, attachments});
+     console.log(`files are: ${req.files}`)
+        const newJob = await Job.create({ client:req.user.id, attachments, ...req.body});
         res.status(201).json(newJob);
     }catch (error) {
         next(error);
@@ -18,6 +18,7 @@ const createJob = async (req, res, next) => {
 //get all jobs
 const getJobs = async (req, res, next) => {
     try {
+        console.log(req.query)
         const { status, category, skillsRequired, sortBy, minBudget, maxBudget, search  } = req.query;
         const filter = {};
         if (search) {
@@ -41,7 +42,7 @@ const getJobs = async (req, res, next) => {
         const jobs = await Job.find(filter).sort(sortOptions).populate('client', 'name avatar').populate({ path: 'proposals', populate: { path: 'freelancer', select: 'name avatar' } }).limit(limit).skip(skip);
         const totalJobs = await Job.countDocuments(filter);
         
-        res.status(201).json({ success: true, data: {jobs, currentPage: page, totalPages: Math.ceil(totalJobs/limit), totalJobs} });
+        res.status(200).json({ success: true, data: {jobs, currentPage: page, totalPages: Math.ceil(totalJobs/limit), totalJobs} });
     }catch (error) {
         next(error);
     }
@@ -50,9 +51,14 @@ const getJobs = async (req, res, next) => {
 const deleteJob = async (req, res, next)=>{
     try{
         const id = req.params.id;
+        
+        console.log(req.user);
+     
+
         const job = await Job.findById(id);
+        console.log(job)
         if(!job)return res.status(404).json("jon not found");
-        if(job.client.toString() !== req.user._id.toString()) return res.status(403).json("job is not yours");
+        if(job.client.toString() !== req.user.id.toString()) return res.status(403).json("job is not yours");
         await job.deleteOne();
         res.status(200).json({success: true, message: "job is deleted"});
     }catch(err){
@@ -64,11 +70,12 @@ const updatedJob = async (req, res, next) =>{
     try{
         const id = req.params.id;
         const existingJob = await Job.findById(id);
+        console.log(` exiting job is: ${existingJob}`);
 
 if (!existingJob)
     return res.status(404).json("job not found");
 
-if (existingJob.client.toString() !==req.user._id.toString()) return res.status(403).json("job is not yours");
+if (existingJob.client.toString() !== req.user.id.toString()) return res.status(403).json("job is not yours");
         const updatedJob = await Job.findByIdAndUpdate(id, req.body, {new: true});
         res.status(200).json({updatedJob, message: "job is updated", success: true})
     }catch(err){
@@ -78,9 +85,11 @@ if (existingJob.client.toString() !==req.user._id.toString()) return res.status(
 const getMyJob = async (req, res, next)=>{
     const id = req.params.id;
     try{
+        
         const job = await Job.findById(id).populate("client", "name avatar").populate({path: "proposals", populate: {path: "freelancer", select: "name avatar"}})
         if(!job) return res.status(404).json("this job not found");
         res.status(200).json({job, message: "job is found", success: true});
+        
 
 
     }catch(err){
