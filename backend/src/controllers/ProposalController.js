@@ -1,10 +1,10 @@
 const Proposal = require("../models/proposal");
 const Job = require("../models/Jobs");
-
+const User = require("../models/User")
 
 exports.SubmitProposalByFreelancer =  async(req, res, next)=>{
     try{
-        
+     const user = await User.findById(req.user.id)   
     const job = await Job.findById(req.params.id)
   if (!job || job.status !== 'open')
     return res.status(400).json({ success:false, message:'Job not available' });
@@ -33,6 +33,12 @@ if (existingProposal) {
 
   job.proposals.push(proposal._id);
   await job.save();
+  const io = req.app.get('io')
+  io.to(job.client.toString()).emit('new-proposal', {
+    job: {id: job._id, title: job.title},
+    proposal: {id: proposal._id, bidAmount: proposal.bidAmount},
+    message: `new proposal from ${user.name}`
+  })
   res.status(201).json({success: true, message: "new proposal is createde", proposal})
 
     }catch(err){
@@ -45,7 +51,10 @@ if (existingProposal) {
 exports.getProposalByFreelancer = async (req, res, next)=>{
     try{
           const myProposals = await Proposal.find({freelancer: req.user.id}).populate("job", "title category budget status").Sort({createdAt: -1});
-    if(myProposals.length === 0) return res.status(404).json({success: false, message: "you dont have proposals"})
+    if(myProposals.length === 0) return res.status(200).json({
+    success: true,
+    myProposals: []
+});
       return res.status(200).json({success: true, message: "done", myProposals})   
     }catch(err){
         next(err)
@@ -90,9 +99,7 @@ exports.updatePropsalStatusByClient = async (req,res, next)=>{
         if(proposal.status === "accepted") {
             proposal.job.status = "in progress"
             await proposal.job.save();
-            if (status === "accepted") {
-    proposal.job.status = "in progress";
-    await proposal.job.save();
+          
 
     await Proposal.updateMany(
         {
@@ -103,15 +110,20 @@ exports.updatePropsalStatusByClient = async (req,res, next)=>{
             status: "rejected"
         }
     );
-}
+
         }
+        const io = req.app.get('io');
+        io.to(proposal.freelancer.toString()).emit('proposal-update', {
+            proposalId: proposal._id, status: proposal.status, jobTitle: proposal.job.title
+        })
         res.status(200).json({
     success: true,
     message: "Proposal updated successfully",
     proposal
 });
 
-    }catch(err){
+    }
+    catch(err){
         next(err)
     }
 }

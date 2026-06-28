@@ -15,6 +15,7 @@ const messageSchema = new mongoose.Schema({
         required: true,
         maxlength: [2000, 'Message content cannot exceed 2000 characters']
     },
+    attachments:  [{ type: String }],
     readBy: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
